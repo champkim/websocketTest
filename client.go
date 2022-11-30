@@ -1,8 +1,12 @@
 package main
 
 import (
+	"encoding/json"
+	"fmt"
 	"log"
+	"strconv"
 	"time"
+	"websocketTest/lib"
 
 	"github.com/gorilla/websocket"
 )
@@ -33,14 +37,17 @@ var upgrader = websocket.Upgrader{
 
 
 type Client struct{
-	world *World
+	id uint64
+	room *ClientRoom
 	conn *websocket.Conn
 	send chan []byte
+	dataKey lib.Bitmask
 }
 
-func NewClient (w *World, c *websocket.Conn) (client *Client) {
+func NewClient (i uint64, w *ClientRoom, c *websocket.Conn) (client *Client) {
 	client = &Client{
-		world: w,
+		id: i,
+		room: w,
 		conn: c,
 		send: make(chan []byte, 256),
 	}
@@ -51,7 +58,7 @@ func NewClient (w *World, c *websocket.Conn) (client *Client) {
 
 func (c *Client) readPump() {
 	defer func() {
-		c.world.ChanLeave <- c //readPump 종료시 ChanLeave 를 호출하는구먼.. world 에서 Client 처리 
+		c.room.ChanLeave <- c //readPump 종료시 ChanLeave 를 호출하는구먼.. world 에서 Client 처리 
 		c.conn.Close()
 	}()
 
@@ -73,7 +80,51 @@ func (c *Client) readPump() {
 			}
 			break
 		}
-		c.world.broadcast <- message
+		
+		buf := lib.DataKey{}						
+		err = json.Unmarshal(message, &buf)
+		if err != nil {
+			log.Printf("error: %s", err)
+		}
+		fmt.Println("code: ", buf.Code, " key: ", buf.Key)
+
+		if (buf.Code == lib.DATAKEY_CODE) {
+			c.dataKey = buf.Key;
+
+			var realdata string = strconv.Itoa(int(c.id));
+
+			realdata += "("+ strconv.Itoa(int(c.dataKey))+")"
+
+			if c.dataKey.IsSet(lib.HOST_KEY) {
+				realdata += ",host"
+			}
+			if c.dataKey.IsSet(lib.LASTPERF_KEY) {
+				realdata += ",last"
+			}
+			if c.dataKey.IsSet(lib.BASIC_KEY) {
+				realdata += ",basic"
+			}
+			if c.dataKey.IsSet(lib.CPU_KEY) {
+				realdata += ",cpu"
+			}
+			if c.dataKey.IsSet(lib.MEM_KEY) {
+				realdata += ",mem"
+			}
+			if c.dataKey.IsSet(lib.NET_KEY) {
+				realdata += ",net"
+			}
+			if c.dataKey.IsSet(lib.DISK_KEY) {
+				realdata += ",disk"
+			}
+			message = []byte(realdata)
+			// message, err = json.Marshal(buf)
+			// if err != nil {
+			// 	log.Printf("error: %s", err)
+			// }
+		}						
+		//c.room.broadcast <- message
+		c.send <- message
+		//c.room.broadcast <- message
 	}
 }
 
@@ -93,7 +144,7 @@ func (c *Client) writePump() {
 				c.conn.WriteMessage(websocket.CloseMessage, []byte{}) //에러시. CloseMessage 8 
 				return
 			}
-			c.conn.WriteMessage(websocket.TextMessage, message) //메시지 보낸다. 
+			c.conn.WriteMessage(websocket.TextMessage, message) //메시지 보낸다. 			
 		case <-ticker.C: //ping message 를 보내지 않을 경우 1분후 종료 
 			c.conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if err := c.conn.WriteMessage(websocket.PingMessage, []byte{}); err != nil { return } //PingMessage 로 HandShake? 

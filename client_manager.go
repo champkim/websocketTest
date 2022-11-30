@@ -9,7 +9,7 @@ type ClientRoom struct {
 	clientMap map[*Client]bool
 	ChanEnter chan *Client
 	ChanLeave chan *Client
-	broadcast chan []byte
+	broadcast chan []byte	
 }
 
 func newClientRoom () *ClientRoom {
@@ -29,13 +29,13 @@ func (w *ClientRoom) run() {
 	for {
 		select {
 		case client := <- w.ChanEnter: //클라이언트 접속시 알림 채널 
-			fmt.Println("connect client(", client,")")
+			fmt.Println("connect client(", client.id,")")
 			w.clientMap[client] = true //클라이언트 맵에 True 표시 
 
 		case client := <- w.ChanLeave: //클라이언트 접속 끊길시 알림 채널. 
 			if _, ok := w.clientMap[client]; ok {
 				delete(w.clientMap, client) //맵에서 제거 				
-				fmt.Println("disconnect client(", client,")")
+				fmt.Println("disconnect client(", client.id,")")
 				close(client.send) //client 의 send 채널 close 
 			}
 

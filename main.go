@@ -7,8 +7,10 @@ import (
 
 
 func main() {
-	world := newWorld()
-	go world.run()
+	clientRoom := newClientRoom()
+	go clientRoom.run()
+
+	var id uint64
 
 	http.HandleFunc("/", serveHome)
 
@@ -18,8 +20,9 @@ func main() {
 			log.Println(err)
 			return
 		}
-		client := NewClient(world, conn) //Client conn 을 가지는 Clinet 생성 -ReadPump, WritePump..set
-		client.world.ChanEnter <- client //Clinet 의 주소값을 넘긴다. 
+		id ++
+		client := NewClient(id, clientRoom, conn) //Client conn 을 가지는 Clinet 생성 -ReadPump, WritePump..set
+		client.room.ChanEnter <- client //Clinet 의 주소값을 넘긴다. 
 	})
 
 	err := http.ListenAndServe(":8080", nil)
