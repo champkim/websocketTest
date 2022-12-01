@@ -6,7 +6,7 @@ import (
 	"log"
 	"strconv"
 	"time"
-	"websocketTest/lib"
+	"websocketTest/types"
 
 	"github.com/gorilla/websocket"
 )
@@ -27,7 +27,10 @@ const (
 
 	// Maximum message size allowed from peer.
 	///SetReadLimit는 피어에서 읽은 메시지의 최대 크기(바이트)를 설정합니다.
-	maxMessageSize = 512
+	// maxMessageSize = 512
+	//maxMessageSize = 65536 
+	//maxMessageSize = 1024 	
+	maxMessageSize = 65536
 )
 
 var upgrader = websocket.Upgrader{
@@ -41,7 +44,7 @@ type Client struct{
 	room *ClientRoom
 	conn *websocket.Conn
 	send chan []byte
-	dataKey lib.Bitmask
+	dataKey types.Bitmask
 }
 
 func NewClient (i uint64, w *ClientRoom, c *websocket.Conn) (client *Client) {
@@ -49,7 +52,7 @@ func NewClient (i uint64, w *ClientRoom, c *websocket.Conn) (client *Client) {
 		id: i,
 		room: w,
 		conn: c,
-		send: make(chan []byte, 256),
+		send: make(chan []byte, 65536), //256
 	}
 	go client.readPump()
 	go client.writePump()
@@ -80,51 +83,125 @@ func (c *Client) readPump() {
 			}
 			break
 		}
-		
-		buf := lib.DataKey{}						
-		err = json.Unmarshal(message, &buf)
+
+		codebuf := types.DataCode{}
+		err = json.Unmarshal(message, &codebuf)
 		if err != nil {
 			log.Printf("error: %s", err)
+			c.send <- message
+			continue
 		}
-		fmt.Println("code: ", buf.Code, " key: ", buf.Key)
 
-		if (buf.Code == lib.DATAKEY_CODE) {
-			c.dataKey = buf.Key;
+		fmt.Println("code: ", codebuf.Code)
 
-			var realdata string = strconv.Itoa(int(c.id));
+		if (codebuf.Code == types.DATAKEY_CODE) {
 
-			realdata += "("+ strconv.Itoa(int(c.dataKey))+")"
+			buf := types.DataKey{}						
+			err = json.Unmarshal(message, &buf)
+			if err != nil {
+				log.Printf("error: %s", err)
+				c.send <- message
+				continue
+			}
+			fmt.Println("code: ", buf.Code, " key: ", buf.Key)
 
-			if c.dataKey.IsSet(lib.HOST_KEY) {
-				realdata += ",host"
-			}
-			if c.dataKey.IsSet(lib.LASTPERF_KEY) {
-				realdata += ",last"
-			}
-			if c.dataKey.IsSet(lib.BASIC_KEY) {
-				realdata += ",basic"
-			}
-			if c.dataKey.IsSet(lib.CPU_KEY) {
-				realdata += ",cpu"
-			}
-			if c.dataKey.IsSet(lib.MEM_KEY) {
-				realdata += ",mem"
-			}
-			if c.dataKey.IsSet(lib.NET_KEY) {
-				realdata += ",net"
-			}
-			if c.dataKey.IsSet(lib.DISK_KEY) {
-				realdata += ",disk"
-			}
-			message = []byte(realdata)
-			// message, err = json.Marshal(buf)
-			// if err != nil {
-			// 	log.Printf("error: %s", err)
-			// }
-		}						
-		//c.room.broadcast <- message
-		c.send <- message
-		//c.room.broadcast <- message
+			if (buf.Code == types.DATAKEY_CODE) {
+
+				c.dataKey = buf.Key;
+				var realdata string = "client[" + strconv.Itoa(int(c.id)) + "]";
+				realdata += " datakey["+ strconv.Itoa(int(c.dataKey))+"] "
+
+				if c.dataKey.IsSet(types.HOST_KEY) {
+					realdata += ",host"
+				}
+				if c.dataKey.IsSet(types.LASTPERF_KEY) {
+					realdata += ",last"
+				}
+				if c.dataKey.IsSet(types.BASIC_KEY) {
+					realdata += ",basic"
+				}
+				if c.dataKey.IsSet(types.CPU_KEY) {
+					realdata += ",cpu"
+				}
+				if c.dataKey.IsSet(types.MEM_KEY) {
+					realdata += ",mem"
+				}
+				if c.dataKey.IsSet(types.NET_KEY) {
+					realdata += ",net"
+				}
+				if c.dataKey.IsSet(types.DISK_KEY) {
+					realdata += ",disk"
+				}
+				message = []byte(realdata)
+				// message, err = json.Marshal(buf)
+				// if err != nil {
+				// 	log.Printf("error: %s", err)
+				// }
+			}								
+			c.send <- message
+			
+		} else if (codebuf.Code == types.HOST_CODE) {
+			//....
+		} else if (codebuf.Code == types.LASTPERF_CODE) {
+			//.....
+		} else if (codebuf.Code == types.BASIC_CODE) {
+			//.....
+		} else if (codebuf.Code == types.CPU_CODE) {
+			//.....
+		} else if (codebuf.Code == types.MEM_CODE) {
+			//.....
+		} else if (codebuf.Code == types.NET_CODE) {
+			//.....
+		} else if (codebuf.Code == types.DISK_CODE) {
+			//.....
+		} 
+				
+		// c.send <- message			
+		// buf := lib.DataKey{}						
+		// err = json.Unmarshal(message, &buf)
+		// if err != nil {
+		// 	log.Printf("error: %s", err)
+		// 	c.send <- message
+		// 	continue
+		// }
+		// fmt.Println("code: ", buf.Code, " key: ", buf.Key)
+
+		// if (buf.Code == lib.DATAKEY_CODE) {
+		// 	c.dataKey = buf.Key;
+
+		// 	var realdata string = strconv.Itoa(int(c.id));
+
+		// 	realdata += "("+ strconv.Itoa(int(c.dataKey))+")"
+
+		// 	if c.dataKey.IsSet(lib.HOST_KEY) {
+		// 		realdata += ",host"
+		// 	}
+		// 	if c.dataKey.IsSet(lib.LASTPERF_KEY) {
+		// 		realdata += ",last"
+		// 	}
+		// 	if c.dataKey.IsSet(lib.BASIC_KEY) {
+		// 		realdata += ",basic"
+		// 	}
+		// 	if c.dataKey.IsSet(lib.CPU_KEY) {
+		// 		realdata += ",cpu"
+		// 	}
+		// 	if c.dataKey.IsSet(lib.MEM_KEY) {
+		// 		realdata += ",mem"
+		// 	}
+		// 	if c.dataKey.IsSet(lib.NET_KEY) {
+		// 		realdata += ",net"
+		// 	}
+		// 	if c.dataKey.IsSet(lib.DISK_KEY) {
+		// 		realdata += ",disk"
+		// 	}
+		// 	message = []byte(realdata)
+		// 	// message, err = json.Marshal(buf)
+		// 	// if err != nil {
+		// 	// 	log.Printf("error: %s", err)
+		// 	// }
+		// }								
+		// c.send <- message
+		// c.room.broadcast <- message
 	}
 }
 

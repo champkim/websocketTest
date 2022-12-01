@@ -5,7 +5,6 @@ import (
 	"net/http"
 )
 
-
 func main() {
 	clientRoom := newClientRoom()
 	go clientRoom.run()

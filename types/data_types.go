@@ -1,4 +1,4 @@
-package lib
+package types
 
 type Bitmask uint32
 
