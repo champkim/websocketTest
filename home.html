@@ -7,7 +7,11 @@
         var conn;
         var msg = document.getElementById("msg");
         msg.value = 0x00000003;
+
         var log = document.getElementById("log");
+        // var host = document.getElementById("host");
+        // var real = document.getElementById("real");
+        // var io = document.getElementById("io");
 
         function sendDataKey(key) {
           var datakey = {
@@ -20,7 +24,9 @@
         function appendLog(item) {
           var doScroll =
             log.scrollTop > log.scrollHeight - log.clientHeight - 1;
-          log.appendChild(item);
+          // log.appendChild(item);
+          log.innerText = item;
+          // log.innerText = log.innerText + "\n" + item;
           if (doScroll) {
             log.scrollTop = log.scrollHeight - log.clientHeight;
           }
@@ -53,10 +59,12 @@
           };
           conn.onmessage = function (evt) {
             var messages = evt.data.split("\n");
+            // var item = document.createElement("div");
+            // var item = host;
             for (var i = 0; i < messages.length; i++) {
-              var item = document.createElement("div");
-              item.innerText = messages[i];
-              appendLog(item);
+              //var item = document.createElement("div");
+              // item.innerText += messages[i];
+              appendLog(messages[i]);
             }
           };
 
@@ -105,7 +113,11 @@
     </style>
   </head>
   <body>
-    <div id="log"></div>
+    <div id="log">
+      <div id="host"></div>
+      <div id="real"></div>
+      <div id="io"></div>
+    </div>
     <form id="form">
       <input type="submit" value="Send" />
       <input type="text" id="msg" size="64" />

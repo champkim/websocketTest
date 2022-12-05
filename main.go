@@ -3,12 +3,16 @@ package main
 import (
 	"log"
 	"net/http"
+	"websocketTest/types"
 )
 
 func main() {
 	clientRoom := newClientRoom()
 	go clientRoom.run()
-
+	 go clientRoom.dataProducer(types.HOST_CODE, clientRoom.HostLastQueue)
+	// go clientRoom.dataProducer(types.BASIC_CODE, clientRoom.BasicQueue)	
+	// go clientRoom.dataProducer(types.NET_CODE, clientRoom.IOQueue)
+	
 	var id uint64
 
 	http.HandleFunc("/", serveHome)

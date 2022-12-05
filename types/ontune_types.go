@@ -21,11 +21,16 @@ const (
 	DISK_KEY     = 64
 )
 
+type DataCode struct {
+	Code uint32 `json:"code"`
+}
+
 type DataKey struct {
 	Code uint32  `json:"code"`
 	Key  Bitmask `json:"key"`
 }
 
-type DataCode struct {
+type RealData struct {
 	Code uint32 `json:"code"`
+	Data string `json:"data"`
 }

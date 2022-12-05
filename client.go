@@ -93,14 +93,13 @@ func (c *Client) readPump() {
 		}
 
 		fmt.Println("code: ", codebuf.Code)
-
 		if (codebuf.Code == types.DATAKEY_CODE) {
 
 			buf := types.DataKey{}						
 			err = json.Unmarshal(message, &buf)
 			if err != nil {
 				log.Printf("error: %s", err)
-				c.send <- message
+				c.send <- message				
 				continue
 			}
 			fmt.Println("code: ", buf.Code, " key: ", buf.Key)
@@ -138,23 +137,24 @@ func (c *Client) readPump() {
 				// 	log.Printf("error: %s", err)
 				// }
 			}								
-			c.send <- message
-			
-		} else if (codebuf.Code == types.HOST_CODE) {
-			//....
-		} else if (codebuf.Code == types.LASTPERF_CODE) {
-			//.....
-		} else if (codebuf.Code == types.BASIC_CODE) {
-			//.....
-		} else if (codebuf.Code == types.CPU_CODE) {
-			//.....
-		} else if (codebuf.Code == types.MEM_CODE) {
-			//.....
-		} else if (codebuf.Code == types.NET_CODE) {
-			//.....
-		} else if (codebuf.Code == types.DISK_CODE) {
-			//.....
+			c.send <- message			
 		} 
+		
+		// else if (codebuf.Code == types.HOST_CODE) {
+		// 	//....
+		// } else if (codebuf.Code == types.LASTPERF_CODE) {
+		// 	//.....
+		// } else if (codebuf.Code == types.BASIC_CODE) {
+		// 	//.....
+		// } else if (codebuf.Code == types.CPU_CODE) {
+		// 	//.....
+		// } else if (codebuf.Code == types.MEM_CODE) {
+		// 	//.....
+		// } else if (codebuf.Code == types.NET_CODE) {
+		// 	//.....
+		// } else if (codebuf.Code == types.DISK_CODE) {
+		// 	//.....
+		// } 
 				
 		// c.send <- message			
 		// buf := lib.DataKey{}						
@@ -214,7 +214,6 @@ func (c *Client) writePump() {
 	for {
 		select {
 		case message, ok := <-c.send: //world.run 에서 1초 ticker 에 의해 send 
-
 			//SetWriteDeadline은 기본 네트워크 연결에 대한 쓰기 기한을 설정합니다. 쓰기 시간이 초과되면 websocket 상태가 손상되고 이후의 모든 쓰기는 오류를 반환합니다. t 값이 0이면 쓰기가 시간 초과되지 않음을 의미합니다.
 			c.conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if !ok {
@@ -222,6 +221,8 @@ func (c *Client) writePump() {
 				return
 			}
 			c.conn.WriteMessage(websocket.TextMessage, message) //메시지 보낸다. 			
+			//c.conn.WriteMessage(websocket.BinaryMessage, message) //메시지 보낸다. 			
+
 		case <-ticker.C: //ping message 를 보내지 않을 경우 1분후 종료 
 			c.conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if err := c.conn.WriteMessage(websocket.PingMessage, []byte{}); err != nil { return } //PingMessage 로 HandShake? 

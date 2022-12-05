@@ -1,28 +1,28 @@
-package data
+package types
 
 import "fmt"
 
 type Node struct {
   Next *Node
   Prev *Node
-  Val interface{}
+  Val interface{}  
 }
 
 type LinkedList struct {
   Root *Node
-  Tail *Node
+  Tail *Node  
 }
 
-func (l *LinkedList) AddNode(val interface{}) {
+func (l *LinkedList) AddNode(val interface{}) {    
   if l.Root == nil {
     l.Root = &Node{Val: val}
-    l.Tail = l.Root
+    l.Tail = l.Root        
     return
   }
   l.Tail.Next = &Node{Val: val}
   prev := l.Tail
   l.Tail = l.Tail.Next
-  l.Tail.Prev = prev
+  l.Tail.Prev = prev  
 }
 
 func (l *LinkedList) Back() interface{} {
@@ -63,7 +63,7 @@ func (l *LinkedList) RemoveNode(node *Node) {
     if l.Root != nil {
       l.Root.Prev = nil
     } 
-    node.Next = nil
+    node.Next = nil    
     return
   }
 

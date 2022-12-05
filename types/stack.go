@@ -1,4 +1,4 @@
-package data
+package types
 
 type Stack struct {
 	ll *LinkedList
